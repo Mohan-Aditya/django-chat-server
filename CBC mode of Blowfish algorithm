@@ -615,6 +615,79 @@ string CBCencrypt(string plaintext)
 
     }
 
+//////////////////////////////////////////////////////////
+//XOR function for OFB mode
+string xorofb(string iv, string b) //HexInput
+    {
+        iv = hexToBin(iv);
+        b = hexToBin(b);
+        string ans = "";
+        for (int i = 0; i < b.size(); i++)
+            ans += (char)(((iv[i] - '0') ^ (b[i] - '0')) + '0');
+        ans = binToHex(ans);
+        return ans;
+    }
+
+//////////////////////////////////////////////////////////
+/**OFB CODE**/
+//////////////////////////////////////////////////////////
+
+string OFBencrypt(string plaintext)
+{
+    cout << "OFB Encrypt MODULE START--------"<<endl;
+    cout << "Plain Text received by OFB Encrypt: "<<plaintext<<endl;
+    string hex_plaintext = textToHex(plaintext);
+    int n = hex_plaintext.size();
+    cout<<"Plain text sixe: "<<n<<endl;
+    string block_iv="";
+    string iv="";
+        //Creating Nonce
+        while(iv.size()<=8)
+        {
+            string ap=to_string(rand());
+            iv=iv.append(ap);
+        }
+        iv=textToHex(iv).substr(0,16);
+        cout << "Nonce generated: "<<iv<<endl;
+        string output_cipher="";
+
+
+    int s= 16; //default stream set size=16(maximum size)
+    int blocks; //Stream of 16 hex
+        if(n%s == 0)
+            blocks = n/s;
+        else
+            blocks = (n/s)+1;
+    for( int i=0; i< blocks; i++)
+    {
+        if(i==0)
+        {
+            string plaintext_block = hex_plaintext.substr(0,s);
+            block_iv=blowfishencrypt(iv); // sending nonce to blowfish algorithm
+            output_cipher=xorofb(block_iv,plaintext_block); // xoring to get the cipher
+            cout<<"Cipher out after block-"<<i+1<<": "<<output_cipher<<endl;
+            hex_plaintext.erase(0,s);
+        }
+        else
+        {
+            string plaintext_block = hex_plaintext.substr(0,s);
+            block_iv=blowfishencrypt(block_iv);//using the value from the previous block
+            string blockout_cipher="";
+            blockout_cipher=xorofb(block_iv,plaintext_block);
+            cout<<"Cipher out after block-"<<i+1<<": "<<blockout_cipher<<endl;
+            output_cipher=output_cipher.append(blockout_cipher);
+            hex_plaintext.erase(0,s);
+        }
+    }
+        cout << " "<< endl;
+        cout<<"OFB Encrypt SUMMARY==="<<endl;
+        cout << "Plain Text: "<<plaintext<<endl;
+        cout<<"Output Cipher Text by OFB Encrypt(HEX): "<<(output_cipher)<<endl;
+        cout<<"Output Cipher Text by OFB Encrypt: "<< hexToASCII(output_cipher)<<endl;
+        cout << " "<< endl;
+        cout << " ------------------------------------------------------------------------"<< endl;
+        return output_cipher;
+}
 
 
 int main()
@@ -622,5 +695,5 @@ int main()
       string plaintext="";
     plaintext = "17045087_Testing CBC mode_PA2";
     CBCencrypt(plaintext);
- 
+     OFBencrypt(plaintext);
 }
